@@ -1,0 +1,3 @@
+3D scanning tool based on official sample.
+Record point cloud, RGB images and camera poses.
+Not very well written.....
