@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/home/yanhang/StudioProjects/PointCloudJava/pointCloudJava/libs/tango_java_lib.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="590293e0156937bd054b8cb8a3c0d4082d11b8ec">
+        <dex dex="/home/yanhang/StudioProjects/PointCloudJava/pointCloudJava/build/intermediates/pre-dexed/debug/tango_java_lib-e460b78cd73bbbf442086ff542f63fc04b70610b.jar" />
+    </item>
+    <item
+        jar="/home/yanhang/StudioProjects/PointCloudJava/pointCloudJava/build/intermediates/exploded-aar/PointCloudJava/tangoUtils/unspecified/jars/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="fb53a5dbb730b1595a2c68a81a3d48839da21994">
+        <dex dex="/home/yanhang/StudioProjects/PointCloudJava/pointCloudJava/build/intermediates/pre-dexed/debug/classes-6a2d0a64f59bea59cbd1e5175daf7393ff9ea7e0.jar" />
+    </item>
+    <item
+        jar="/home/yanhang/Android/Sdk/extras/android/m2repository/com/android/support/support-v4/19.1.0/support-v4-19.1.0.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
+        <dex dex="/home/yanhang/StudioProjects/PointCloudJava/pointCloudJava/build/intermediates/pre-dexed/debug/support-v4-19.1.0-6b944e288705c4b00827d80a06e469fbfb718d9f.jar" />
+    </item>
+
+</items>
