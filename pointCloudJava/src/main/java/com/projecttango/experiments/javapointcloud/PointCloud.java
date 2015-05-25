@@ -31,7 +31,7 @@ public class PointCloud {
     private PointCloudActivity activity;
     private int point_count = 0;
     private Object savelock = new Object();
-    public int downsample = 10;
+    public int downsample = 1;
 
     PointCloud(PointCloudActivity activity_){
         activity = activity_;
@@ -75,6 +75,28 @@ public class PointCloud {
         }
     }
 
+//    public boolean AddPoint(final byte[] newframe, final TangoPoseData ss2d, final TangoPoseData d2c,  int count){
+//        synchronized (savelock) {
+//            final FloatBuffer fb = ByteBuffer.wrap(newframe).order(ByteOrder.nativeOrder()).asFloatBuffer();
+//            if (fb.capacity() % 3 != 0) {
+//                Log.w("Point Cloud", "Broken points!");
+//                return false;
+//            }
+//            float[] curpoints = new float[count / downsample * 3];
+//            points_per_frame.add(count / downsample);
+//            for(int i=0; i<count / downsample; i++) {
+//                curpoints[i*3] = fb.get(i * downsample * 3);
+//                curpoints[i*3+1] = fb.get(i * downsample * 3 + 1);
+//                curpoints[i*3+2] = fb.get(i * downsample * 3 + 2);
+//            }
+//            points.add(curpoints);
+//            float[] curmatrix = PCFrame.getMatrix(ss2d, d2c);
+//            poses.add(curmatrix);
+//            point_count += count / downsample;
+//            return true;
+//        }
+//    }
+
     public boolean writePly(){
         synchronized (savelock) {
             boolean isExternal = isExternalSorageWritable();
@@ -102,6 +124,7 @@ public class PointCloud {
                     for (int i = 0; i < points_per_frame.get(frameid); i++) {
                         float[] curpt = new float[3];
                         curpt[0] = curpoints[i*3]; curpt[1] = curpoints[i*3+1]; curpt[2] = curpoints[i*3+2];
+
                         float[] transformed = transform(curpt, cameramatrix);
 //                        out.writeFloat(transformed[0]);
 //                        out.writeFloat(transformed[1]);

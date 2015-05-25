@@ -3,6 +3,7 @@ package com.projecttango.experiments.javapointcloud; /**
  */
 
 import android.content.Intent;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
@@ -33,12 +34,31 @@ public class PCFrame {
 
     static public float[] getMatrix(ModelMatCalculator calculator){
         float[] curmatrix = calculator.getPointCloudModelMatrixCopy();
-        curmatrix[3] = -1*curmatrix[12];
-        curmatrix[7] = -1*curmatrix[13];
-        curmatrix[11] = -1*curmatrix[14];
-        curmatrix[12]=0; curmatrix[13]=0; curmatrix[14]=0;
-        return curmatrix;
+        float[] transposematrix = MatrixUtil.matrixTranspose(curmatrix);
+        return transposematrix;
     }
+
+
+
+//    static public float[] getMatrix(TangoPoseData ss2d, TangoPoseData d2c){
+//        float[] tvec_ss2d = ss2d.getTranslationAsFloats();
+//        float[] rot_ss2d = ss2d.getRotationAsFloats();
+////        float[] tvec_d2c = d2c.getTranslationAsFloats();
+////        float[] rot_d2c = d2c.getRotationAsFloats();
+//
+//        float[] mat_ss2d = MatrixUtil.matrixTranspose(ModelMatCalculator.quaternionMatrixOpenGL(rot_ss2d));
+//        mat_ss2d[3] = tvec_ss2d[0]; mat_ss2d[7] = tvec_ss2d[1]; mat_ss2d[11] = tvec_ss2d[2];
+//
+////        float[] mat_d2c = MatrixUtil.matrixTranspose(ModelMatCalculator.quaternionMatrixOpenGL(rot_d2c));
+////        mat_d2c[3] = tvec_d2c[0]; mat_d2c[7] = tvec_d2c[1]; mat_d2c[11] = tvec_d2c[2];
+//
+////        float[] ss2c = MatrixUtil.matrixMul(mat_ss2d, mat_d2c);
+//
+////        float[] resmatrix = MatrixUtil.extrinsicInverse(mat_ss2d);
+////        return resmatrix;
+//        //return mat_ss2d;
+//        return MatrixUtil.setIdentity();
+//    }
 
     public void Adddata(Bitmap newRGBdata, ModelMatCalculator calculator){
         synchronized (addloc) {
@@ -48,6 +68,15 @@ public class PCFrame {
             posedata.add(posematrix);
         }
     }
+
+//    public void Adddata(Bitmap newRGBdata, TangoPoseData ss2d, TangoPoseData d2c){
+//        synchronized (addloc) {
+//            float[] posematrix = getMatrix(ss2d, d2c);
+//            JniBitmapHolder curholder = new JniBitmapHolder(newRGBdata);
+//            RGBdata.add(curholder);
+//            posedata.add(posematrix);
+//        }
+//    }
 
     public boolean isExternalSorageWritable(){
         String state = Environment.getExternalStorageState();
@@ -119,7 +148,7 @@ public class PCFrame {
 
                     FileOutputStream RGBstream = new FileOutputStream(RGBFile);
                     Bitmap curimage = RGBdata.get(i).getBitmap();
-                    curimage.compress(Bitmap.CompressFormat.PNG, 60, RGBstream);
+                    curimage.compress(Bitmap.CompressFormat.PNG, 100, RGBstream);
                     RGBstream.close();
                     activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(RGBFile)));
                 }

@@ -119,6 +119,42 @@
                 android:text="@string/NA" />
 
          </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Intrinsic: " />
+
+            <TextView
+                android:id="@+id/intrinsic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/NA" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Distortion: " />
+
+            <TextView
+                android:id="@+id/distortion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/NA" />
+
+        </LinearLayout>
         
          <LinearLayout
             android:layout_width="wrap_content"
@@ -136,6 +172,7 @@
                 android:layout_height="wrap_content" 
                 android:text="@string/NA" />
         </LinearLayout>
+
            
     </LinearLayout>
 

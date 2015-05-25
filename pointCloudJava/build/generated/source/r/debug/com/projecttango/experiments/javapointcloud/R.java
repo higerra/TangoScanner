@@ -19,18 +19,20 @@ public final class R {
     }
     public static final class id {
         public static final int appversion=0x7f070004;
-        public static final int capture_frame=0x7f07000b;
-        public static final int color_preview=0x7f07000d;
+        public static final int capture_frame=0x7f07000d;
+        public static final int color_preview=0x7f07000f;
         public static final int debuginfo=0x7f070002;
-        public static final int first_person_button=0x7f070008;
-        public static final int frameDelta=0x7f070007;
+        public static final int distortion=0x7f070008;
+        public static final int first_person_button=0x7f07000a;
+        public static final int frameDelta=0x7f070009;
         public static final int frame_count=0x7f070005;
         public static final int gl_surface_view=0x7f070000;
+        public static final int intrinsic=0x7f070007;
         public static final int linearlayout=0x7f070001;
         public static final int pointCount=0x7f070006;
-        public static final int save_data=0x7f07000c;
-        public static final int third_person_button=0x7f070009;
-        public static final int top_down_button=0x7f07000a;
+        public static final int save_data=0x7f07000e;
+        public static final int third_person_button=0x7f07000b;
+        public static final int top_down_button=0x7f07000c;
         public static final int version=0x7f070003;
     }
     public static final class layout {

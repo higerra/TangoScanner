@@ -77,6 +77,8 @@ public class PointCloudActivity extends Activity implements OnClickListener{
     private TextView mApplicationVersionTextView;
     private TextView mFrequencyTextView;
     private TextView mDebugInfoTextView;
+    private TextView mIntrinsic;
+    private TextView mDistortion;
 
     private Button mFirstPersonButton;
     private Button mThirdPersonButton;
@@ -100,7 +102,10 @@ public class PointCloudActivity extends Activity implements OnClickListener{
     private float mDeltaTime;
     private int count;
     private boolean mIsTangoServiceConnected;
+    private TangoPoseData mDevice2Color;
+    private TangoPoseData mDevice2Depth;
     private TangoPoseData mPose;
+
     private static final int UPDATE_INTERVAL_MS = 50;
     private static ModelMatCalculator mExtrinsicCalculator = new ModelMatCalculator();
     public static Object poseLock = new Object();
@@ -109,7 +114,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
     private final int mCaptureInterval = 1;
     private int mCaptureCount = 0;
 
-    private final int mPointCloudInterval = 3;
+    private final int mPointCloudInterval = 2;
     private int mPointCloudCount = 0;
 
     private String mDebugText = new String("Initializing...");
@@ -130,6 +135,8 @@ public class PointCloudActivity extends Activity implements OnClickListener{
         mApplicationVersionTextView = (TextView) findViewById(R.id.appversion);
         mFrequencyTextView = (TextView) findViewById(R.id.frameDelta);
         mDebugInfoTextView = (TextView) findViewById(R.id.debuginfo);
+        mIntrinsic = (TextView) findViewById(R.id.intrinsic);
+        mDistortion = (TextView) findViewById(R.id.distortion);
 
         mFirstPersonButton = (Button) findViewById(R.id.first_person_button);
         mFirstPersonButton.setOnClickListener(this);
@@ -226,6 +233,9 @@ public class PointCloudActivity extends Activity implements OnClickListener{
             try {
                 mTango.connect(mConfig);
                 mIsTangoServiceConnected = true;
+                TangoCameraIntrinsics intrin = mTango.getCameraIntrinsics(TangoCameraIntrinsics.TANGO_CAMERA_COLOR);
+                mIntrinsic.setText(String.format("fx:%f fy:%f cx:%f cy:%f", intrin.fx, intrin.fy, intrin.cx, intrin.cy));
+                mDistortion.setText(String.format("r1:%f r2:%f r3:%f", intrin.distortion[0], intrin.distortion[1], intrin.distortion[2]));
             } catch (TangoOutOfDateException e) {
                 Toast.makeText(getApplicationContext(), R.string.TangoOutOfDateException,
                         Toast.LENGTH_SHORT).show();
@@ -279,6 +289,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
 
             if(mCaptureCount >= mCaptureInterval) {
                 frame.Adddata(bitmap, mExtrinsicCalculator);
+                //frame.Adddata(bitmap, RGBPose, mDevice2Color);
                 mColorFrameCount++;
                 mCaptureCount = 0;
             }else
@@ -365,6 +376,16 @@ public class PointCloudActivity extends Activity implements OnClickListener{
                 color2IMUPose.getTranslationAsFloats(), color2IMUPose.getRotationAsFloats());
         mExtrinsicCalculator.SetColorCamera2IMUMatrix(
                 color2IMUPose.getTranslationAsFloats(), color2IMUPose.getRotationAsFloats());
+
+//        mDevice2Color = new TangoPoseData();
+//        framePair.baseFrame = TangoPoseData.COORDINATE_FRAME_CAMERA_COLOR;
+//        framePair.targetFrame = TangoPoseData.COORDINATE_FRAME_DEVICE;
+//        mDevice2Color = mTango.getPoseAtTime(0.0, framePair);
+//
+//        mDevice2Depth = new TangoPoseData();
+//        framePair.baseFrame = TangoPoseData.COORDINATE_FRAME_CAMERA_DEPTH;
+//        framePair.targetFrame = TangoPoseData.COORDINATE_FRAME_DEVICE;
+//        mDevice2Depth = mTango.getPoseAtTime(0.0, framePair);
     }
 
 
@@ -440,6 +461,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
 
                             if(mPointCloudCount >= mPointCloudInterval) {
                                 pointcloud.AddPoint(buffer, pointCloudPose, mRenderer.getModelMatCalculator(), xyzIj.xyzCount);
+                                //pointcloud.AddPoint(buffer, pointCloudPose, mDevice2Depth, xyzIj.xyzCount);
                                 mPointCloudCount = 0;
                             }else{
                                 mPointCloudCount++;

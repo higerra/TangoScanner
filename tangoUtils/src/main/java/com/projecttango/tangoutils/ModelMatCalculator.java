@@ -17,6 +17,7 @@
 package com.projecttango.tangoutils;
 
 import android.opengl.Matrix;
+import android.util.Log;
 
 /**
  * Utility class to manage the calculation of a Model Matrix from the
@@ -46,6 +47,13 @@ public class ModelMatCalculator {
         Matrix.setIdentityM(mPointCloudModelMatrix, 0);
     }
 
+    static public void logMatrix(final String tag, final float[] m){
+        Log.d(tag, "==================================");
+        Log.d(tag, String.format("%f %f %f %f", m[0], m[1], m[2], m[3]));
+        Log.d(tag, String.format("%f %f %f %f", m[4], m[5], m[6], m[7]));
+        Log.d(tag, String.format("%f %f %f %f", m[8], m[9], m[10], m[11]));
+        Log.d(tag, String.format("%f %f %f %f", m[12], m[13], m[14], m[15]));
+    }
     /**
      * Updates the model matrix (rotation and translation).
      * 
@@ -127,16 +135,19 @@ public class ModelMatCalculator {
         mDevice2IMUMatrix[12] = translation[0];
         mDevice2IMUMatrix[13] = translation[1];
         mDevice2IMUMatrix[14] = translation[2];
+        logMatrix("Device2IMUMatrix", mDevice2IMUMatrix);
     }
 
     public void SetColorCamera2IMUMatrix(float[] translation, float[] quaternion) {
-        mOpengl2ColorCameraMatrix = new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f };
+        mOpengl2ColorCameraMatrix = new float[] { 1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, -1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, -1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f };
         mColorCamera2IMUMatrix = quaternionMatrixOpenGL(quaternion);
         mColorCamera2IMUMatrix[12] = translation[0];
         mColorCamera2IMUMatrix[13] = translation[1];
         mColorCamera2IMUMatrix[14] = translation[2];
+        logMatrix("Camera2IMUMatrix", mColorCamera2IMUMatrix);
     }
 
     public float[] getModelMatrix() {
@@ -153,9 +164,10 @@ public class ModelMatCalculator {
         float[] modelMatCopy = new float[16];
         float[] tempMultMat = new float[16];
         Matrix.setIdentityM(tempMultMat, 0);
-        float[] invertYandZMatrix = new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f };
+        float[] invertYandZMatrix = new float[] { 1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, -1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, -1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f };
         Matrix.multiplyMM(tempMultMat, 0, mPointCloudModelMatrix, 0,
                 invertYandZMatrix, 0);
         System.arraycopy(tempMultMat, 0, modelMatCopy, 0, 16);
