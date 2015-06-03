@@ -23,6 +23,7 @@ import com.projecttango.tangoutils.ModelMatCalculator;
 
 public class PCFrame {
     private ArrayList<float[]>posedata = new ArrayList<float[]>();
+    private ArrayList<Double>timestamp = new ArrayList<Double>();
     private PointCloudActivity activity = null;
     private ArrayList<JniBitmapHolder> RGBdata = new ArrayList<JniBitmapHolder>();
     private static Object saveloc = new Object();
@@ -60,12 +61,13 @@ public class PCFrame {
 //        return MatrixUtil.setIdentity();
 //    }
 
-    public void Adddata(Bitmap newRGBdata, ModelMatCalculator calculator){
+    public void Adddata(Bitmap newRGBdata, double time, ModelMatCalculator calculator){
         synchronized (addloc) {
             float[] posematrix = getMatrix(calculator);
             JniBitmapHolder curholder = new JniBitmapHolder(newRGBdata);
             RGBdata.add(curholder);
             posedata.add(posematrix);
+            timestamp.add(time);
         }
     }
 
@@ -99,7 +101,7 @@ public class PCFrame {
                 }
                 File posePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/data/pose");
                 File RGBPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/data/images");
-
+                File timePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/data");
                 if (!posePath.exists()) {
                     if (!posePath.mkdirs()) {
                         Log.e("IOError", "Can not make directory");
@@ -139,7 +141,7 @@ public class PCFrame {
                 }
 
                 for (int i = 0; i < RGBdata.size(); i++) {
-                    File RGBFile = new File(RGBPath, String.format("/image%03d.png", i));
+                    File RGBFile = new File(RGBPath, String.format("/image%03d.jpg", i));
 
                     if (RGBFile.exists())
                         RGBFile.delete();
@@ -148,10 +150,22 @@ public class PCFrame {
 
                     FileOutputStream RGBstream = new FileOutputStream(RGBFile);
                     Bitmap curimage = RGBdata.get(i).getBitmap();
-                    curimage.compress(Bitmap.CompressFormat.PNG, 100, RGBstream);
+                    curimage.compress(Bitmap.CompressFormat.JPEG, 70, RGBstream);
                     RGBstream.close();
                     activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(RGBFile)));
                 }
+
+                File timeFile = new File(timePath, "/time_RGB.txt");
+                if(timeFile.exists())
+                    timeFile.delete();
+                FileOutputStream timestream = new FileOutputStream(timeFile);
+                PrintWriter pw = new PrintWriter(timestream);
+                for(int i=0; i<timestamp.size(); i++){
+                    pw.println(String.format("%f", timestamp.get(i)));
+                }
+                pw.close();
+                timestream.close();
+                activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(timeFile)));
             } catch (IOException e) {
                 Log.e("IOError", "Cannot write files!");
             }

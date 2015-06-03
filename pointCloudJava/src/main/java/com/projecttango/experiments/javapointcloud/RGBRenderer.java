@@ -50,13 +50,15 @@ class RGBRenderer implements GLSurfaceView.Renderer {
    int videoVertexBuffer_;
    int videoTextureName_;
 
+   int camera;
    int offscreenBuffer_;
    Point offscreenSize_;
 
    volatile boolean saveNextFrame_ = false;
 
-   RGBRenderer(PointCloudActivity activity) {
+   RGBRenderer(PointCloudActivity activity, int cameraType) {
       activity_ = activity;
+      camera = cameraType;
    }
 
    @Override
@@ -87,7 +89,7 @@ class RGBRenderer implements GLSurfaceView.Renderer {
       glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, videoTextureName_);
 
       // Connect the texture to Tango.
-      activity_.attachTexture(TangoCameraIntrinsics.TANGO_CAMERA_COLOR, videoTextureName_);
+      activity_.attachTexture(camera, videoTextureName_);
 
       // Prepare the shader program.
       videoProgram_ = createShaderProgram(videoVertexSource, videoFragmentSource);
@@ -101,7 +103,7 @@ class RGBRenderer implements GLSurfaceView.Renderer {
               0);
 
       // Get the camera frame dimensions.
-      offscreenSize_ = activity_.getCameraFrameSize(TangoCameraIntrinsics.TANGO_CAMERA_COLOR);
+      offscreenSize_ = activity_.getCameraFrameSize(camera);
 
       // Create an offscreen render target to capture a frame.
       IntBuffer renderbufferName = IntBuffer.allocate(1);
@@ -125,7 +127,7 @@ class RGBRenderer implements GLSurfaceView.Renderer {
 
    @Override
    public void onDrawFrame(GL10 gl) {
-      activity_.updateTexture(TangoCameraIntrinsics.TANGO_CAMERA_COLOR);
+      activity_.updateTexture(camera);
       glClear(GL_COLOR_BUFFER_BIT);
       glBindBuffer(GL_ARRAY_BUFFER, videoVertexBuffer_);
       glVertexAttribPointer(videoVertexAttribute_, 2, GL_BYTE, false, 0, 0);

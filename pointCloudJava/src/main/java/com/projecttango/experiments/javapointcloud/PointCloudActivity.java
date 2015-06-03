@@ -19,6 +19,7 @@ package com.projecttango.experiments.javapointcloud;
 import com.google.atap.tangoservice.Tango;
 import com.google.atap.tangoservice.Tango.OnTangoUpdateListener;
 import com.google.atap.tangoservice.TangoCameraIntrinsics;
+import com.google.atap.tangoservice.TangoCameraPreview;
 import com.google.atap.tangoservice.TangoConfig;
 import com.google.atap.tangoservice.TangoCoordinateFramePair;
 import com.google.atap.tangoservice.TangoErrorException;
@@ -114,8 +115,9 @@ public class PointCloudActivity extends Activity implements OnClickListener{
     private final int mCaptureInterval = 1;
     private int mCaptureCount = 0;
 
-    private final int mPointCloudInterval = 2;
+    private final int mPointCloudInterval = 1;
     private int mPointCloudCount = 0;
+    private final double mMaxTimeDiff = 0.05;
 
     private String mDebugText = new String("Initializing...");
 
@@ -159,7 +161,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
 
         int maxDepthPoints = mConfig.getInt("max_point_cloud_elements");
         mRenderer = new PCRenderer(maxDepthPoints);
-        mRGBRenderer = new RGBRenderer(this);
+        mRGBRenderer = new RGBRenderer(this, TangoCameraIntrinsics.TANGO_CAMERA_COLOR);
 
         mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
         mGLView.setEGLContextClientVersion(2);
@@ -170,6 +172,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
         mColorView.setRenderer(mRGBRenderer);
         mColorView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mColorView.setZOrderOnTop(true);
+
 
 
         PackageInfo packageInfo;
@@ -279,7 +282,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
     public synchronized void addFrame(final Bitmap bitmap) {
         TangoPoseData RGBPose = mTango.getPoseAtTime(0.0,
                 new TangoCoordinateFramePair(TangoPoseData.COORDINATE_FRAME_AREA_DESCRIPTION, TangoPoseData.COORDINATE_FRAME_DEVICE));
-        if (RGBPose.statusCode == TangoPoseData.POSE_VALID && mColorFrameCount < 300) {
+        if (RGBPose.statusCode == TangoPoseData.POSE_VALID && mColorFrameCount < 400) {
             mColorDeltaTime = (float)(RGBPose.timestamp - mColorPreviousTimeStamp) * SECS_TO_MILLISECS;
             mColorPreviousTimeStamp = (float)RGBPose.timestamp;
 
@@ -288,8 +291,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
                     RGBPose.getRotationAsFloats());
 
             if(mCaptureCount >= mCaptureInterval) {
-                frame.Adddata(bitmap, mExtrinsicCalculator);
-                //frame.Adddata(bitmap, RGBPose, mDevice2Color);
+                frame.Adddata(bitmap, mColorPreviousTimeStamp, mExtrinsicCalculator);
                 mColorFrameCount++;
                 mCaptureCount = 0;
             }else
@@ -325,10 +327,11 @@ public class PointCloudActivity extends Activity implements OnClickListener{
                 setDebugInfo("Saving data");
                 frame.saveData();
                 setDebugInfo("Saving point clouds...");
-                pointcloud.writePly();
+                pointcloud.writePlySingle();
                 setDebugInfo("Save complete!");
                 break;
             case R.id.capture_frame:
+
                 setDebugInfo("Frame captured");
                 mRGBRenderer.startSaveFrame();
             default:
@@ -404,7 +407,7 @@ public class PointCloudActivity extends Activity implements OnClickListener{
                 // the data.
                 synchronized (poseLock) {
                     if(pose.statusCode == TangoPoseData.POSE_VALID) {
-                        setDebugInfo("Standby");
+                        setDebugInfo("Scanning...");
                         mRGBRenderer.startSaveFrame();
                         mPose = pose;
                         // Calculate the delta time from previous pose.
@@ -459,9 +462,8 @@ public class PointCloudActivity extends Activity implements OnClickListener{
                             mRenderer.getPointCloud().setModelMatrix(
                                     mRenderer.getModelMatCalculator().getPointCloudModelMatrixCopy());
 
-                            if(mPointCloudCount >= mPointCloudInterval) {
-                                pointcloud.AddPoint(buffer, pointCloudPose, mRenderer.getModelMatCalculator(), xyzIj.xyzCount);
-                                //pointcloud.AddPoint(buffer, pointCloudPose, mDevice2Depth, xyzIj.xyzCount);
+                            if((mPointCloudCount >= mPointCloudInterval) && (java.lang.Math.abs(mCurrentTimeStamp - mColorPreviousTimeStamp) < mMaxTimeDiff)) {
+                                pointcloud.AddPoint(buffer, pointCloudPose, mRenderer.getModelMatCalculator(), xyzIj.xyzCount, mCurrentTimeStamp);
                                 mPointCloudCount = 0;
                             }else{
                                 mPointCloudCount++;
@@ -485,8 +487,9 @@ public class PointCloudActivity extends Activity implements OnClickListener{
 
             @Override
             public void onFrameAvailable(int cameraId) {
-                if(cameraId == TangoCameraIntrinsics.TANGO_CAMERA_COLOR)
+                if(cameraId == TangoCameraIntrinsics.TANGO_CAMERA_COLOR) {
                     mColorView.requestRender();
+                }
             }
         });
     }

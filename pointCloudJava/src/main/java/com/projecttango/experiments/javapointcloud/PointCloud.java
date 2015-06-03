@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -27,6 +28,7 @@ public class PointCloud {
     private ArrayList<float[]>points = new ArrayList<float[]>();
     private ArrayList<float[]>poses = new ArrayList<float[]>();
     private ArrayList<Integer>points_per_frame = new ArrayList<Integer>();
+    private ArrayList<Float>timestamp = new ArrayList<Float>();
 
     private PointCloudActivity activity;
     private int point_count = 0;
@@ -53,8 +55,9 @@ public class PointCloud {
         return transformed;
     }
 
-    public boolean AddPoint(final byte[] newframe, final TangoPoseData pose, final ModelMatCalculator calculator,  int count){
+    public boolean AddPoint(final byte[] newframe, final TangoPoseData pose, final ModelMatCalculator calculator,  int count, float time){
         synchronized (savelock) {
+            timestamp.add(time);
             final FloatBuffer fb = ByteBuffer.wrap(newframe).order(ByteOrder.nativeOrder()).asFloatBuffer();
             if (fb.capacity() % 3 != 0) {
                 Log.w("Point Cloud", "Broken points!");
@@ -96,6 +99,69 @@ public class PointCloud {
 //            return true;
 //        }
 //    }
+    public void writePlySingle() {
+        synchronized (savelock) {
+            boolean isExternal = isExternalSorageWritable();
+            if (!isExternal) {
+                Log.e("IOError", "Can not access storage!");
+                return;
+            }
+            try {
+                File plyPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/data/Ply");
+                if (!plyPath.exists()) {
+                    if (!plyPath.mkdirs()) {
+                        Log.e("IOError", "Can not make directory");
+                        activity.setDebugInfo("Can not make directory");
+                        throw new IOException();
+                    }
+                }
+
+                for (int frameid = 0; frameid < points.size(); frameid++) {
+                    float[] cameramatrix = poses.get(frameid);
+                    float[] curpoints = points.get(frameid);
+                    File pcfile = new File(plyPath, String.format("/Scan%03d.ply", frameid));
+                    Log.i("Saving data", pcfile.getAbsolutePath());
+                    if (pcfile.exists())
+                        pcfile.delete();
+
+                    FileOutputStream fos = new FileOutputStream(pcfile);
+                    DataOutputStream out = new DataOutputStream(fos);
+                    out.write("ply\n".getBytes());
+                    out.write("format ascii 1.0\n".getBytes());
+                    out.write(String.format("element vertex %d\n", points_per_frame.get(frameid)).getBytes());
+                    out.write("property float x\nproperty float y\nproperty float z\n".getBytes());
+                    out.write("end_header\n".getBytes());
+                    for (int i = 0; i < points_per_frame.get(frameid); i++) {
+                        float[] curpt = new float[3];
+                        curpt[0] = curpoints[i * 3];
+                        curpt[1] = curpoints[i * 3 + 1];
+                        curpt[2] = curpoints[i * 3 + 2];
+
+                        float[] transformed = transform(curpt, cameramatrix);
+                        out.write(String.format("%f %f %f\n", transformed[0], transformed[1], transformed[2]).getBytes());
+                    }
+                    out.close();
+                    fos.close();
+                    activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(pcfile)));
+                }
+                Log.i("Saving data", "Save complete!");
+                File timeFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + String.format("/data/time_Point.txt"));
+                if(timeFile.exists())
+                    timeFile.delete();
+                FileOutputStream timestream = new FileOutputStream(timeFile);
+                PrintWriter pw = new PrintWriter(timestream);
+                for(int i=0; i<timestamp.size(); i++){
+                    pw.println(String.format("%f", timestamp.get(i)));
+                }
+                pw.close();
+                timestream.close();
+                activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(timeFile)));
+
+            } catch (IOException e) {
+                Log.e("Point Cloud", "Cannot write point cloud file");
+            }
+        }
+    }
 
     public boolean writePly(){
         synchronized (savelock) {
@@ -124,11 +190,7 @@ public class PointCloud {
                     for (int i = 0; i < points_per_frame.get(frameid); i++) {
                         float[] curpt = new float[3];
                         curpt[0] = curpoints[i*3]; curpt[1] = curpoints[i*3+1]; curpt[2] = curpoints[i*3+2];
-
                         float[] transformed = transform(curpt, cameramatrix);
-//                        out.writeFloat(transformed[0]);
-//                        out.writeFloat(transformed[1]);
-//                        out.writeFloat(transformed[2]);
                         out.write(String.format("%f %f %f\n", transformed[0], transformed[1], transformed[2]).getBytes());
                     }
                 }
